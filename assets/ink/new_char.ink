@@ -12,18 +12,19 @@ There is only blackness. Until, suddenly, there isn't. Green and gold swirl in i
 
 The swirling colors resolve into vast plains of yellow grains and tall grass, folding into low rolling hills near the distant horizon. The first thing you do is <>
 
-* [fall to your knees], nearly overcome with weakness.
+* fall to your knees[], nearly overcome with weakness.
 * [scan for enemies]
 * [take a deep breath]
 * [laugh in triumph]
 * [crouch in the tall grass]
 
 - You try to remember who you are...
-* [a man] -> male_pronouns
-* [a woman] -> female_pronouns
-* [something else] -> generic_pronouns
+* He looks down at his hands[]. -> male_pronouns ->
+* She looks down at her hands[]. -> female_pronouns ->
+* They look down at their hands[]. -> generic_pronouns ->
 
-Yes, that's right. {pn_He} looks down at {pn_his} hands.
+- <> These hands were made for...
+* [Fighting] 
 
 == male_pronouns
 ~pn_he = "he"
@@ -32,16 +33,16 @@ Yes, that's right. {pn_He} looks down at {pn_his} hands.
 ~pn_He = "He"
 ~pn_Him = "Him"
 ~pn_His = "His"
--> DONE
+->->
 
 == female_pronouns
 ~pn_he = "she"
 ~pn_him = "her"
-~pn_his = "hers"
+~pn_his = "her"
 ~pn_He = "She"
 ~pn_Him = "Her"
 ~pn_His = "Hers"
--> DONE
+->->
 
 == generic_pronouns
 ~pn_he = "they"
@@ -50,4 +51,4 @@ Yes, that's right. {pn_He} looks down at {pn_his} hands.
 ~pn_He = "They"
 ~pn_Him = "Them"
 ~pn_His = "Their"
--> DONE
+->->
