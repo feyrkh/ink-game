@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://story/StoryParagraph.gd" type="Script" id=1]
+
+[node name="StoryParagraph" type="RichTextLabel"]
+margin_right = 316.0
+margin_bottom = 15.0
+rect_scale = Vector2( 2, 2 )
+custom_colors/default_color = Color( 0, 0, 0, 1 )
+bbcode_enabled = true
+text = "A paragraph"
+fit_content_height = true
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}

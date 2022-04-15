@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://assets/scroll.png" type="Texture" id=1]
+[ext_resource path="res://story/StoryChoiceContainer.gd" type="Script" id=2]
+
+[node name="StoryChoiceContainer" type="Node2D"]
+script = ExtResource( 2 )
+
+[node name="scroll" type="Sprite" parent="."]
+position = Vector2( 132.255, 262.553 )
+scale = Vector2( 0.58438, 0.94674 )
+texture = ExtResource( 1 )
+
+[node name="ChoiceContainer" type="VBoxContainer" parent="."]
+margin_left = 25.0
+margin_top = 79.0
+margin_right = 239.0
+margin_bottom = 455.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
