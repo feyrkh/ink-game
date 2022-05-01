@@ -198,3 +198,17 @@ static func is_node_paused(node:Node, tree:SceneTree):
 	if node.pause_mode == Node.PAUSE_MODE_PROCESS:
 		return false
 	return is_node_paused(node.get_parent(), tree)
+
+static func project_point_from_screen_position(camera, layer_mask, screen_position, max_distance=30):
+	var from = camera.project_ray_origin(screen_position)
+	var to = from + camera.project_ray_normal(screen_position) * max_distance
+	var space_state = camera.get_world().get_direct_space_state()
+	var intersect = space_state.intersect_ray(from, to, [], layer_mask)
+	if intersect.has("position"):
+		return intersect["position"]
+	else:
+		return null
+
+static func project_point_from_mouse(camera, layer_mask, max_distance=30):
+	var mouse_pos = camera.get_viewport().get_mouse_position()
+	return project_point_from_screen_position(camera, layer_mask, mouse_pos, max_distance)
