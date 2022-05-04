@@ -1,30 +1,32 @@
-extends Sprite3D
+extends Spatial
 class_name Card
 
 const CARD_LAYER_MASK = 1<<0
 const CARD_Y_OFFSET_INCREMENT = 0.03
 const HILITE_COLOR = Color("fdffbd")
+const SHADOW_CARD = preload("res://cards/ShadowCard.tscn")
+
 
 export(String) var card_name
 var nearby_cards_moved = false
 var dragging = false
 
 func _ready():
-	material_override = material_override.duplicate()
+	$CardImage.material = $CardImage.material.duplicate()
 
 func _process(delta):
 	if nearby_cards_moved:
 		nearby_cards_moved = false
 		sink_down()
-		set_process(false)
 
 func get_drag_shadow():
-	var shadow = Sprite3D.new()
-	shadow.texture = texture
-	shadow.material_override = material_override.duplicate()
-	shadow.material_override.albedo_color = Color(0.1, 0.1, 0.1, 0.4)
-	shadow.pixel_size = pixel_size
-	shadow.axis = axis
+	var shadow = SHADOW_CARD.instance()
+	#var shadow = Sprite3D.new()
+	#shadow.texture = texture
+	#shadow.material = shadow.material.duplicate()
+	#shadow.material.albedo_color = Color(0.1, 0.1, 0.1, 0.4)
+	#shadow.pixel_size = pixel_size
+	#shadow.axis = axis
 	return shadow
 
 func drag_sway(drag_amt):
@@ -37,37 +39,44 @@ func _on_StaticBody_input_event(camera: Node, event: InputEvent, click_position:
 		if event.doubleclick:
 			print("Mouse doubleclick on ", self)
 		elif event.pressed and event.button_index == BUTTON_LEFT:
-			dragging = true
 			#print("Mouse click at: ", event.global_position, " shape:", self)
 			var pickup_offset = Util.project_point_from_mouse(get_viewport().get_camera(), CARD_LAYER_MASK)
 			bring_to_top()
 			EventBus.emit_signal("start_drag", self, pickup_offset)
 			unhighlight()
 		elif event.pressed == false:
-			dragging = false
 			print("Mouse release at: ", event.global_position, " shape:", self)
 			EventBus.emit_signal("stop_drag")
 
+func drag_started():
+	$CardImage.scale = Vector3(0.6, 1, 0.6)
+	dragging = true
+
+func drag_stopped():
+	$CardImage.scale = Vector3.ONE
+	dragging = false
+
 func _on_StaticBody_mouse_entered() -> void:
-	highlight()
+	pass #highlight()
 
 func highlight():
 	if !dragging:
-		material_override.albedo_color = HILITE_COLOR
+		$CardImage.material.albedo_color = HILITE_COLOR
 	else:
-		material_override.albedo_color = Color.white
+		$CardImage.material.albedo_color = Color.white
 
 func _on_StaticBody_mouse_exited() -> void:
-	unhighlight()
+	pass#unhighlight()
 
 func unhighlight():
-	material_override.albedo_color = Color.white
+	$CardImage.material.albedo_color = Color.white
 
 func get_overlapping_cards():
 	var overlapping_areas = $OverlapDetector.get_overlapping_areas()
 	var overlapping_cards = []
 	for area in overlapping_areas:
 		overlapping_cards.append(area.owner)
+	#print("Overlapping cards: ", overlapping_cards)
 	return overlapping_cards
 
 func bring_to_top():
@@ -77,7 +86,6 @@ func bring_to_top():
 		if card.transform.origin.y > self.transform.origin.y:
 			higher_cards.append(card)
 			card.nearby_cards_moved = true
-			card.set_process(true)
 
 	higher_cards.sort_custom(self, "sort_by_height")
 	var highest_card_y = higher_cards[-1].transform.origin.y
@@ -94,17 +102,21 @@ func sink_down():
 	var highest_height_below_me = 0
 	var overlapping_cards = get_overlapping_cards()
 
-	#print(self, "sinking down from ", transform.origin.y, ", has ", overlapping_cards.size(), " overlapping cards")
+	print(self, " sinking down from ", transform.origin.y, ", has ", overlapping_cards.size(), " overlapping cards")
 	for card in overlapping_cards:
+		#card.nearby_cards_moved = true
 		if card.transform.origin.y < transform.origin.y and card.transform.origin.y > highest_height_below_me:
 			highest_height_below_me = card.transform.origin.y
 	if highest_height_below_me + CARD_Y_OFFSET_INCREMENT < transform.origin.y:
 		transform.origin.y = highest_height_below_me + CARD_Y_OFFSET_INCREMENT
 		#print(self, " sank down to ", transform.origin.y)
 		for card in overlapping_cards:
-			card.nearby_cards_moved = true
-			card.set_process(true)
+			if card.has_method("queue_height_update"):
+				card.queue_height_update()
 			#print("asked ", card, " to sink down as well")
+
+func queue_height_update():
+	nearby_cards_moved = true
 
 func sort_by_height(a, b):
 	return a.transform.origin.y < b.transform.origin.y

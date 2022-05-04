@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://assets/cards/blank-card.png" type="Texture" id=1]
+
+[sub_resource type="SpatialMaterial" id=1]
+flags_transparent = true
+params_depth_draw_mode = 3
+albedo_texture = ExtResource( 1 )
+anisotropy_enabled = true
+anisotropy = 1.0
+
+[node name="CardImage" type="CSGBox"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0629149, 0 )
+width = 1.00026
+height = 0.001
+depth = 1.43262
+material = SubResource( 1 )

@@ -9,7 +9,7 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "Sprite3D",
+"base": "Spatial",
 "class": "Card",
 "language": "GDScript",
 "path": "res://cards/Card.gd"
@@ -470,6 +470,7 @@ mouse_drag={
 3d_physics/layer_1="Pickable Items"
 3d_physics/layer_2="Card Overlap"
 3d_physics/layer_3="Tabletop"
+3d_physics/layer_4="Card Core"
 
 [physics]
 

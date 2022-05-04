@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://cards/BlankCard.tscn" type="PackedScene" id=1]
+[ext_resource path="res://assets/cards/velvet.jpg" type="Texture" id=2]
+
+[sub_resource type="SpatialMaterial" id=1]
+params_depth_draw_mode = 3
+albedo_texture = ExtResource( 2 )
+anisotropy_enabled = true
+anisotropy = 1.0
+
+[node name="TabletopImage" type="Spatial"]
+
+[node name="Image" parent="." instance=ExtResource( 1 )]
+width = 28.0
+depth = 28.0
+material = SubResource( 1 )

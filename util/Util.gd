@@ -212,3 +212,15 @@ static func project_point_from_screen_position(camera, layer_mask, screen_positi
 static func project_point_from_mouse(camera, layer_mask, max_distance=30):
 	var mouse_pos = camera.get_viewport().get_mouse_position()
 	return project_point_from_screen_position(camera, layer_mask, mouse_pos, max_distance)
+
+static func raycast_from_point(node, from_point, dir_vector, layer_mask, exclude=[]):
+	var space_state = node.get_world().get_direct_space_state()
+	var intersect = space_state.intersect_ray(from_point, from_point+dir_vector, exclude, layer_mask, false, true)
+#collider: The colliding object.
+#collider_id: The colliding object's ID.
+#metadata: The intersecting shape's metadata. This metadata is different from Object.get_meta(), and is set with Physics2DServer.shape_set_data().
+#normal: The object's surface normal at the intersection point.
+#position: The intersection point.
+#rid: The intersecting object's RID.
+#shape: The shape index of the colliding shape.
+	return intersect
