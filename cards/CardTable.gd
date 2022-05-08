@@ -1,15 +1,24 @@
 extends Spatial
 
+const INFO_ITEM_LAYER_MASK = 1<<4
 const TABLE_COLLIDER_MASK = 1<<2
 const CARD_CORE_LAYER_MASK = 1<<3
 const DRAG_CAMERA = 1
-const DRAG_CARD = 2
+const PRE_DRAG_CARD = 2
+const DRAG_CARD = 3
 const CARD_SNAP_SIZE = Vector2(0.6*2, 0.8*2) / 3
+const PRE_DRAG_PAUSE_TIME = 0.15
+
+onready var camera = find_node("Camera")
+onready var Entities = find_node("Entities")
 
 var dragging_item
 var dragging_shadow
 var drag_mode = null
 var drag_initial_rotation
+var pre_drag_pause_counter = 0
+
+var prev_pointing_at = null # what the mouse cursor is hovering over, if anything
 
 var drag_start_world_coords:Vector3 # world space position of the mouse on the surface of the table when dragging started
 var dragging_item_initial_position:Vector3 # world space position of the item being dragged, in case we need to put it back where it came from
@@ -22,6 +31,7 @@ var tile_try_list = [Vector3(0,0,0)]
 func _ready():
 	EventBus.connect("start_drag", self, "start_drag")
 	EventBus.connect("stop_drag", self, "stop_drag")
+	EventBus.connect("place_entity", self, "place_entity")
 	for dist in range(1, 10):
 		for y in range(-dist, dist+1):
 			for x in range(-dist, dist+1):
@@ -29,6 +39,10 @@ func _ready():
 				if steps_away != dist:
 					continue
 				tile_try_list.append(Vector3(x, 0, y))
+
+func place_entity(entity_view_node:Spatial, initial_coords):
+	Entities.add_child(entity_view_node)
+	entity_view_node.global_transform.origin = initial_coords
 
 func start_drag(item:Node, pickup_offset:Vector3):
 	clear_shadow()
@@ -39,23 +53,26 @@ func start_drag(item:Node, pickup_offset:Vector3):
 	if item == self:
 		drag_mode = DRAG_CAMERA
 	else:
-		drag_mode = DRAG_CARD
+		drag_mode = PRE_DRAG_CARD
 		dragging_item = item
 		dragging_shadow = null
 		drag_initial_rotation = dragging_item.rotation_degrees
-		if dragging_item.has_method("get_drag_shadow"):
-			dragging_shadow = dragging_item.get_drag_shadow()
-			if dragging_shadow:
-				add_child(dragging_shadow)
 		dragging_item_initial_position = dragging_item.global_transform.origin
 		dragging_item_pickup_offset =  dragging_item_initial_position
 		dragging_item_pickup_offset.y = 0
-		dragging_item.drag_started()
-		print("Pickup offset: ", dragging_item_pickup_offset)
-		last_drag_pixel = null
-		call_deferred("update_drag")
-	print("drag start at ", drag_start_world_coords)
 
+func pre_drag_complete():
+	drag_mode = DRAG_CARD
+	if dragging_item.has_method("get_drag_shadow"):
+		dragging_shadow = dragging_item.get_drag_shadow()
+		if dragging_shadow:
+			add_child(dragging_shadow)
+
+	dragging_item.drag_started()
+	print("Pickup offset: ", dragging_item_pickup_offset)
+	last_drag_pixel = null
+	call_deferred("update_drag")
+	print("drag start at ", drag_start_world_coords)
 
 func stop_drag():
 	if drag_mode == DRAG_CARD:
@@ -67,6 +84,13 @@ func stop_drag():
 		dragging_item.drag_stopped()
 	clear_shadow()
 	drag_mode = null
+	pre_drag_pause_counter = 0
+
+func cancel_drag():
+	clear_shadow()
+	dragging_item = null
+	drag_mode = null
+	pre_drag_pause_counter = 0
 
 func clear_shadow():
 	if dragging_shadow:
@@ -74,6 +98,16 @@ func clear_shadow():
 		dragging_shadow = null
 
 func _physics_process(delta: float) -> void:
+	if drag_mode == null:
+		var pointing_at = Util.project_point_from_mouse(camera, INFO_ITEM_LAYER_MASK, 30, true)
+		#print("Pointing at: ", pointing_at)
+		if pointing_at:
+			var cur_pointing_at = pointing_at["collider"]
+			if cur_pointing_at != prev_pointing_at:
+				prev_pointing_at = cur_pointing_at
+				EventBus.emit_signal("show_card_info", pointing_at["collider"].owner)
+		else: # Hide info panel
+			EventBus.emit_signal("hide_card_info")
 	if drag_mode != null && !Input.is_action_pressed("mouse_drag"):
 		stop_drag()
 		return
@@ -84,9 +118,9 @@ func _physics_process(delta: float) -> void:
 			return
 	last_drag_pixel_update_count = 0
 	last_drag_pixel = cur_drag_pixel
-	update_drag()
+	update_drag(delta)
 
-func update_drag():
+func update_drag(delta):
 	if drag_mode == DRAG_CAMERA:
 		var camera = $Camera
 		var new_mouse_world_pos = Util.project_point_from_mouse(camera, TABLE_COLLIDER_MASK)
@@ -95,7 +129,14 @@ func update_drag():
 		var world_dist_moved = new_mouse_world_pos - Vector3(drag_start_world_coords.x, 0, drag_start_world_coords.z)
 		camera.global_transform.origin.x -= world_dist_moved.x
 		camera.global_transform.origin.z -= world_dist_moved.z
-	elif drag_mode == DRAG_CARD:
+	elif drag_mode == PRE_DRAG_CARD:
+		if !Input.is_action_pressed("mouse_drag"):
+			cancel_drag()
+		else:
+			pre_drag_pause_counter += delta
+			if pre_drag_pause_counter >= PRE_DRAG_PAUSE_TIME:
+				pre_drag_complete()
+	if drag_mode == DRAG_CARD:
 		var camera = $Camera
 		var world_dist_moved = Util.project_point_from_mouse(camera, TABLE_COLLIDER_MASK) - Vector3(drag_start_world_coords.x, -0.75, drag_start_world_coords.z)
 		#print("world_dist_moved: ", world_dist_moved)

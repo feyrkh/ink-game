@@ -6,13 +6,21 @@ const CARD_Y_OFFSET_INCREMENT = 0.03
 const HILITE_COLOR = Color("fdffbd")
 const SHADOW_CARD = preload("res://cards/ShadowCard.tscn")
 
+onready var CardContents = find_node("CardContents")
 
 export(String) var card_name
 var nearby_cards_moved = false
 var dragging = false
+var entity
+
+func set_entity(entity_data):
+	entity = entity_data
 
 func _ready():
-	$CardImage.material = $CardImage.material.duplicate()
+	$CardImage.mesh.material = $CardImage.mesh.material.duplicate()
+
+func get_card_info():
+	return CardContents.get_card_info()
 
 func _process(delta):
 	if nearby_cards_moved:
@@ -49,7 +57,7 @@ func _on_StaticBody_input_event(camera: Node, event: InputEvent, click_position:
 			EventBus.emit_signal("stop_drag")
 
 func drag_started():
-	$CardImage.scale = Vector3(0.6, 1, 0.6)
+	$CardImage.scale = Vector3(0.6, 0.6, 0.6)
 	dragging = true
 
 func drag_stopped():
@@ -61,15 +69,15 @@ func _on_StaticBody_mouse_entered() -> void:
 
 func highlight():
 	if !dragging:
-		$CardImage.material.albedo_color = HILITE_COLOR
+		$CardImage.mesh.material.albedo_color = HILITE_COLOR
 	else:
-		$CardImage.material.albedo_color = Color.white
+		$CardImage.mesh.material.albedo_color = Color.white
 
 func _on_StaticBody_mouse_exited() -> void:
 	pass#unhighlight()
 
 func unhighlight():
-	$CardImage.material.albedo_color = Color.white
+	$CardImage.mesh.material.albedo_color = Color.white
 
 func get_overlapping_cards():
 	var overlapping_areas = $OverlapDetector.get_overlapping_areas()
